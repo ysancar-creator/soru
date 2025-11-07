@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yapay Zeka Destekli Pil Sorusu Değerlendirme</title>
     
-
-<script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Inter font ailesini yükleyelim */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -52,11 +52,11 @@
         <main class="p-6">
             <div class="grid md:grid-cols-2 gap-6">
                 
-
-<div>
+                <!-- Sol Sütun: Resim ve Bilgi -->
+                <div>
                     
-
-<img src="d.jpg" alt="Pil tutucu ve piller" class="rounded-lg shadow-md w-1/2 mx-auto mb-4">
+                    <!-- Görsel (d.jpg) -->
+                    <img src="d.jpg" alt="Pil tutucu ve piller" class="rounded-lg shadow-md w-1/2 mx-auto mb-4">
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-800 mb-2">Bilgi</h2>
                         <p class="text-gray-700 leading-relaxed">
@@ -65,36 +65,32 @@
                     </div>
                 </div>
 
-                
-
-<div>
+                <!-- Sağ Sütun: Sorular ve Değerlendirme Kutuları -->
+                <div>
                     
-
-<div class="mb-6">
+                    <!-- Soru A -->
+                    <div class="mb-6">
                         <label for="answer-a" class="block text-lg font-semibold text-gray-900 mb-2">
                             a) Görselde verilen pil tutucunun içerisine yerleştirilecek piller ne şekilde bağlanmış olur? Açıklayınız.
                         </label>
                         <textarea id="answer-a" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Cevabınızı buraya yazınız..."></textarea>
                         
-                        
-
-<div id="result-box-a" class="evaluation-box hidden">
+                        <!-- Soru A için Değerlendirme Kutusu (Başlangıçta gizli) -->
+                        <div id="result-box-a" class="evaluation-box hidden">
                             <h4>Değerlendirme (a):</h4>
                             <p class="mt-2 text-gray-700"></p>
                         </div>
                     </div>
 
-                    
-
-<div class="mb-6">
+                    <!-- Soru B -->
+                    <div class="mb-6">
                         <label for="answer-b" class="block text-lg font-semibold text-gray-900 mb-2">
                             b) Bu bağlanma şeklinin avantajları ve dezavantajları nelerdir? Açıklayınız.
                         </label>
                         <textarea id="answer-b" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Cevabınızı buraya yazınız..."></textarea>
                         
-                        
-
-<div id="result-box-b" class="evaluation-box hidden">
+                        <!-- Soru B için Değerlendirme Kutusu (Başlangıçta gizli) -->
+                        <div id="result-box-b" class="evaluation-box hidden">
                             <h4>Değerlendirme (b):</h4>
                             <p class="mt-2 text-gray-700"></p>
                         </div>
@@ -102,20 +98,19 @@
                 </div>
             </div>
 
-            
-
-<footer class="mt-6 pt-6 border-t border-gray-200">
+            <!-- Footer: Buton ve Hata Kutusu -->
+            <footer class="mt-6 pt-6 border-t border-gray-200">
                 
-
-<div id="overall-result-box" class="evaluation-box hidden mb-4">
+                <!-- Genel Değerlendirme Kutusu -->
+                <div id="overall-result-box" class="evaluation-box hidden mb-4">
                     <h4>Genel Değerlendirme:</h4>
                     <p class="mt-2 text-gray-700"></p>
                 </div>
                 
                 <div class="flex items-center justify-end gap-4">
                     
-
-<div id="error-box" class="evaluation-box incorrect hidden flex-1">
+                    <!-- Hata Mesajı Kutusu (Başlangıçta gizli) -->
+                    <div id="error-box" class="evaluation-box incorrect hidden flex-1">
                         <h4>Hata:</h4>
                         <p class="mt-2 text-gray-700"></p>
                     </div>
@@ -163,7 +158,7 @@
             errorBox.classList.add('hidden');
             resultBoxA.classList.add('hidden');
             resultBoxB.classList.add('hidden');
-            overallBox.classList.add('hidden');
+            overallBox.classList.add('hidden'); // Bu satırı ekledim
 
             try {
                 // 1. Bizim "Aracı Sunucumuza" (Vercel) isteği gönder
@@ -180,19 +175,25 @@
 
                 if (response.ok) {
                     // 2. Başarılı Değerlendirme (Sunucudan 200 OK geldi)
-                    const { overallStatus, evaluationA, evaluationB } = data;
+                    // BU KOD, 'undefined' HATASINI ÇÖZMEK İÇİN GÜNCELLENDİ
+                    const { evaluationA, evaluationB, overallStatus } = data; // overallStatus eklendi (varsa)
+
+                    // 'data'nın kendisinin undefined olup olmadığını kontrol et
+                    if (!evaluationA || !evaluationB) {
+                        throw new Error('Sunucudan beklenen veri yapısı alınamadı.');
+                    }
 
                     // A Kutusu
                     resultBoxA.classList.remove('hidden');
                     setBoxStatus(resultBoxA, evaluationA.status);
-                    resultBoxA.querySelector('h4').innerText = `Değerlendirme (a): ${evaluationA.status}`;
-                    resultBoxA.querySelector('p').innerText = evaluationA.feedback;
+                    resultBoxA.querySelector('h4').innerText = `Değerlendirme (a): ${evaluationA.status || 'Hata'}`;
+                    resultBoxA.querySelector('p').innerText = evaluationA.feedback || 'Geri bildirim alınamadı.';
                     
                     // B Kutusu
                     resultBoxB.classList.remove('hidden');
                     setBoxStatus(resultBoxB, evaluationB.status);
-                    resultBoxB.querySelector('h4').innerText = `Değerlendirme (b): ${evaluationB.status}`;
-                    resultBoxB.querySelector('p').innerText = evaluationB.feedback;
+                    resultBoxB.querySelector('h4').innerText = `Değerlendirme (b): ${evaluationB.status || 'Hata'}`;
+                    resultBoxB.querySelector('p').innerText = evaluationB.feedback || 'Geri bildirim alınamadı.';
                     
                     // Genel Durum Kutusu (varsa)
                     if (overallStatus) {
@@ -207,7 +208,7 @@
                 }
 
             } catch (error) {
-                // 4. Ağ Hatası veya JSON Parse Hatası
+                // 4. Ağ Hatası veya JSON Parse Hatası ("The string did not match...")
                 console.error("Değerlendirme hatası:", error);
                 errorBox.classList.remove('hidden');
                 // Hata mesajını "undefined" değil, detaylı göster
