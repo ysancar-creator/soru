@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soru Değerlendirme Aracı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .evaluation-box { border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+        <header class="p-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+            <h1 class="text-2xl md:text-3xl font-bold">Elektronik Devreler: Pil Bağlantıları</h1>
+            <p class="mt-1 text-blue-100">Yapay Zeka Değerlendirme Aracı</p>
+        </header>
+
+        <main class="p-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Sol Sütun: Görsel ve Açıklama -->
+                <div>
+                    <img src="d.jpg" alt="Pil tutucu ve piller" class="rounded-lg shadow-md w-1/2 mx-auto mb-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-2">Bilgi</h2>
+                        <p class="text-gray-700 leading-relaxed">
+                            Pille çalışan elektronik aletlerin içinde yer alan pil tutucular, pillerin güvenli bir şekilde yerleştirilerek sabitlenmesini ve devreye doğru şekilde bağlanmasını sağlar...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sağ Sütun: Sorular ve Cevap Alanları -->
+                <div>
+                    <!-- Soru A -->
+                    <div class="mb-6">
+                        <label for="answer-a" class="block text-lg font-semibold text-gray-900 mb-2">
+                            a) Piller ne şekilde bağlanmış olur? Açıklayınız.
+                        </label>
+                        <textarea id="answer-a" rows="4" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Cevabınızı buraya yazınız..."></textarea>
+                    </div>
+                    <!-- Soru B -->
+                    <div class="mb-6">
+                        <label for="answer-b" class="block text-lg font-semibold text-gray-900 mb-2">
+                            b) Bu bağlanma şeklinin avantajları ve dezavantajları nelerdir?
+                        </label>
+                        <textarea id="answer-b" rows="5" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Cevabınızı buraya yazınız..."></textarea>
+                    </div>
+                    
+                    <!-- Değerlendirme Butonu ve Durum Alanı -->
+                    <footer class="mt-6 pt-6 border-t border-gray-200 flex items-center justify-end gap-4">
+                        <div id="status-container" class="flex-grow">
+                            <!-- Değerlendirme sonuçları buraya gelecek -->
+                        </div>
+                        <button id="evaluate-button" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all">
+                            Değerlendir
+                        </button>
+                    </footer>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        const evaluateButton = document.getElementById('evaluate-button');
+        const answerA = document.getElementById('answer-a');
+        const answerB = document.getElementById('answer-b');
+        const statusContainer = document.getElementById('status-container');
+
+        evaluateButton.addEventListener('click', async () => {
+            const studentAnswerA = answerA.value;
+            const studentAnswerB = answerB.value;
+
+            if (!studentAnswerA || !studentAnswerB) {
+                showStatus('Lütfen her iki soruyu da cevaplayın.', 'error');
+                return;
+            }
+
+            showStatus('Değerlendiriliyor...', 'loading');
+
+            try {
+                // --- KRİTİK DEĞİŞİKLİK ---
+                // API'yi doğrudan çağırmıyoruz.
+                // Kendi sunucumuzdaki (Vercel) /api/evaluate adresini çağırıyoruz.
+                const response = await fetch('/api/evaluate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentAnswerA: studentAnswerA,
+                        studentAnswerB: studentAnswerB
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Sunucu hatası oluştu.');
+                }
+
+                const data = await response.json();
+                
+                // Gelen değerlendirmeyi göster
+                showStatus(data.evaluation, data.status); // status: "Doğru", "Yanlış" vb.
+
+            } catch (error) {
+                console.error('Değerlendirme hatası:', error);
+                showStatus(`Değerlendirme başarısız: ${error.message}`, 'error');
+            }
+        });
+
+        function showStatus(message, type = 'info') {
+            statusContainer.innerHTML = ''; // Temizle
+            const box = document.createElement('div');
+            box.className = 'evaluation-box';
+            
+            let aEvaluation = "";
+            let bEvaluation = "";
+
+            if (typeof message === 'object' && message !== null) {
+                // Gelen JSON objesini formatla
+                aEvaluation = `<div><h4 class='font-semibold'>A Sorusu: ${message.evaluationA.status}</h4><p>${message.evaluationA.feedback}</p></div>`;
+                bEvaluation = `<div class='mt-4'><h4 class='font-semibold'>B Sorusu: ${message.evaluationB.status}</h4><p>${message.evaluationB.feedback}</p></div>`;
+                box.innerHTML = aEvaluation + bEvaluation;
+                
+                if (message.overallStatus === "Doğru") {
+                    type = 'success';
+                } else if (message.overallStatus === "Kısmen Doğru") {
+                    type = 'warning';
+                } else {
+                    type = 'error';
+                }
+
+            } else {
+                // Düz metin mesajı (Yükleniyor, Hata vb.)
+                if (type === 'loading') {
+                    box.innerHTML = `<div class='flex items-center'><div class='loading-spinner mr-3'></div><span>${message}</span></div>`;
+                } else {
+                    box.innerText = message;
+                }
+            }
+
+            // Renklendirme
+            if (type === 'success') box.className += ' bg-green-100 border border-green-300 text-green-800';
+            else if (type === 'warning') box.className += ' bg-yellow-100 border border-yellow-300 text-yellow-800';
+            else if (type === 'error') box.className += ' bg-red-100 border border-red-300 text-red-800';
+            else box.className += ' bg-blue-100 border border-blue-300 text-blue-800';
+
+            statusContainer.appendChild(box);
+        }
+    </script>
+</body>
+</html>
